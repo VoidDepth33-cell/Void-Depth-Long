@@ -13,14 +13,13 @@ pexels_key = os.environ.get('PEXELS_API_KEY')
 chat_id = os.environ.get('CHAT_ID')
 telegram_token = os.environ.get('TELEGRAM_BOT_TOKEN')
 
-# 👇 USA Channel Name (Updated to Short Form for Safety) 👇
-channel_name = "DSCH®" 
+# 👇 Channel Name Updated for Watermark 👇
+channel_name = "Void & Depth" 
 
 print(f"DEBUG: Processing {len(scenes_data)} scenes async...")
 
 # --- SMART DYNAMIC FALLBACK KEYWORDS ---
-# GitHub Actions se jo bhi fallback theme aayegi, yeh usey list mein badal dega.
-fallback_env = os.environ.get('FALLBACK_KEYWORDS', 'deep space, galaxy, universe, nebula, black hole, creepy space, cosmic horror')
+fallback_env = os.environ.get('FALLBACK_KEYWORDS', 'deep ocean, dark space, glowing light, abstract water, cosmic void')
 FALLBACK_KEYWORDS = [kw.strip() for kw in fallback_env.split(',')]
 
 TEMP_DIR = "/dev/shm" if os.path.exists("/dev/shm") else os.getcwd()
@@ -31,12 +30,10 @@ async def fetch_pexels_video(session, keyword):
         for attempt in range(2):
             try:
                 await asyncio.sleep(random.uniform(0.1, 0.5))
-                # Jab attempts badhein toh safe page=1 rakho taaki khali result na aaye
                 random_page = random.randint(1, 5) if attempt == 0 else 1 
                 url = f"https://api.pexels.com/videos/search?query={urllib.parse.quote(query)}&per_page=5&page={random_page}&orientation=landscape&size=large"
                 
                 async with session.get(url, headers={"Authorization": pexels_key}, timeout=10) as response:
-                    # [IMPROVED]: Added Rate Limit (429) Handling
                     if response.status == 429:
                         await asyncio.sleep(2)
                         continue
@@ -71,7 +68,7 @@ async def process_scene(session, i, scene):
         tts_success = False
         for attempt in range(3):
             try:
-                # 👇 USA English Voice for storytelling 👇
+                # 👇 Male English Voice for storytelling 👇
                 communicate = edge_tts.Communicate(text_line, "en-US-ChristopherNeural", rate="+10%")
                 await asyncio.wait_for(communicate.save(raw_mp3), timeout=15.0)
                 tts_success = True
@@ -103,24 +100,21 @@ async def process_scene(session, i, scene):
                     async with session.get(vid_url, timeout=15) as resp:
                         if resp.status == 200:
                             vid_bytes = await resp.read()
-                            # 👇 YAHAN LIMIT 50KB KAR DI GAYI HAI 👇
                             if len(vid_bytes) > 50000: 
                                 with open(vid_path, "wb") as f:
                                     f.write(vid_bytes)
                                 is_valid_video = True
-                                break # Download successful, break loop
+                                break 
                             else:
                                 print(f"Video file too small ({len(vid_bytes)} bytes) on attempt {download_attempt+1}, discarding.")
                 except Exception as e:
                     print(f"Failed to download video for scene {i} on attempt {download_attempt+1}: {str(e)}")
                     
-            vid_url = None # Reset for fallback fetch
+            vid_url = None 
 
         pop_path = os.path.abspath("pop.mp3")
         has_pop = os.path.exists(pop_path)
 
-        # 👇 Watermark Fixed: 20% opacity (white@0.2), Top-Right (x=w-tw-40:y=40), Smaller Size (36) 👇
-        # [FIXED]: Added tpad and apad to guarantee perfect stream lengths and eliminate black gaps
         if is_valid_video:
             cmd = ['ffmpeg', '-y', '-ignore_editlist', '1', '-stream_loop', '-1', '-fflags', '+genpts', '-i', vid_path, '-ss', '0.2', '-i', raw_mp3]
             if has_pop: cmd += ['-i', pop_path]
@@ -216,8 +210,8 @@ async def main_pipeline():
         run_id = os.environ.get('GITHUB_RUN_ID', str(int(time.time())))
         tag_name = f"vid-{run_id}"
         
-        # 👇 Repo name updated as per screenshot and workflow 👇
-        repo_name = os.environ.get('GITHUB_REPOSITORY', "deepspaceusa-cyber/Deep-Space-USA-Long") 
+        # 👇 Repo name updated to the new specific repo 👇
+        repo_name = os.environ.get('GITHUB_REPOSITORY', "VoidDepth33-cell/Void-Depth-Long") 
         
         try:
             cmd = ['gh', 'release', 'create', tag_name, final_video, '--repo', repo_name, '--notes', 'Automated Video Render']
@@ -249,10 +243,6 @@ async def main_pipeline():
             try:
                 async with session.post(f"https://api.telegram.org/bot{telegram_token}/sendMessage", json=payload) as resp:
                     resp_text = await resp.text()
-                    print(f"\n--- TELEGRAM DEBUG ---")
-                    print(f"Status Code: {resp.status}")
-                    print(f"Response: {resp_text}")
-                    print(f"----------------------\n")
             except Exception as e:
                 print(f"CRITICAL: Telegram API error - {str(e)}")
         else:
