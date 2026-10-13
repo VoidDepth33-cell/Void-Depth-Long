@@ -10,7 +10,8 @@ permissions:
 
 jobs:
   build_video:
-    runs-on: ubuntu-latest
+    # 👇 Yahan ubuntu-latest ki jagah macos-latest kar diya hai
+    runs-on: macos-latest
     timeout-minutes: 60 
 
     steps:
@@ -23,9 +24,10 @@ jobs:
           python-version: '3.10'
 
       - name: Install System Dependencies (FFmpeg)
+        # 👇 MacOS ke liye apt-get ki jagah Homebrew (brew) use hota hai
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
+          brew update
+          brew install ffmpeg
 
       - name: Install Python Libraries
         run: |
