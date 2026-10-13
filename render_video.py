@@ -68,6 +68,9 @@ async def process_scene(session, i, scene):
         tts_success = False
         for attempt in range(3):
             try:
+                # Anti-bot delay added here
+                await asyncio.sleep(random.uniform(1.0, 2.5))
+                
                 # 👇 Male English Voice for storytelling 👇
                 communicate = edge_tts.Communicate(text_line, "en-US-ChristopherNeural", rate="+10%")
                 await asyncio.wait_for(communicate.save(raw_mp3), timeout=15.0)
@@ -161,7 +164,8 @@ async def run_ffmpeg_async(cmd):
 
 async def main_pipeline():
     async with aiohttp.ClientSession() as session:
-        sem = asyncio.Semaphore(4)
+        # Reduced concurrency from 4 to 1 to prevent aggressive IP blocking
+        sem = asyncio.Semaphore(1)
         
         async def safe_process(session, i, scene):
             async with sem:
