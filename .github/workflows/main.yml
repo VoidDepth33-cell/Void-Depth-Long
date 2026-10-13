@@ -10,8 +10,7 @@ permissions:
 
 jobs:
   build_video:
-    # 👇 Yahan ubuntu-latest ki jagah macos-latest kar diya hai
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 60 
 
     steps:
@@ -24,16 +23,16 @@ jobs:
           python-version: '3.10'
 
       - name: Install System Dependencies (FFmpeg)
-        # 👇 MacOS ke liye apt-get ki jagah Homebrew (brew) use hota hai
         run: |
-          brew update
-          brew install ffmpeg
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
 
       - name: Install Python Libraries
         run: |
           python -m pip install --upgrade pip
           pip install requests aiohttp
-          pip install --force-reinstall git+https://github.com/rany2/edge-tts.git
+          # 👇 Yahan explicitly version 7.3.0 install kar rahe hain
+          pip install edge-tts==7.3.0
 
       - name: Run Video Rendering Script
         env:
